@@ -1,0 +1,50 @@
+{
+   "name": "TrunkFingerprint",
+   "abstract": "This thing calculates a fingerprint of DB structure",
+   "description": "This thing calculates a fingerprint of DB structure",
+   "version": "1.0.0",
+   "maintainer": "Alexey Bashtanov <bashtanov@imap.cc>",
+   "license": {
+      "PostgreSQL": "http://www.postgresql.org/about/licence"
+   },
+   "prereqs": {
+      "runtime": {
+         "requires": {
+            "PostgreSQL": ">= 9.4.0"
+         }
+         "recommends": {
+            "PostgreSQL": "< 9.5.0"
+         }
+      }
+   },
+   "provides": {
+     "trunkfingerprint": {
+       "file": "trunkfingerprint--1.0.0.sql",
+       "docfile": "README.md",
+       "version": "1.0.0"
+     }
+   },
+   "release_status": "stable",
+   "meta-spec": {
+      "version": "1.0.0",
+      "url": "http://pgxn.org/meta/spec.txt"
+   },
+   "tags": [
+      "fingerprint",
+      "structure",
+      "hash",
+      "comparison"
+   ],
+   "resources": {
+      "homepage": "http://github.com/bashtanov/trunkfingerprint",
+      "bugtracker": {
+         "web": "http://github.com/bashtanov/trunkfingerprint/issues",
+         "mailto": "bashtanov@imap.cc"
+      },
+      "repository": {
+        "url":  "https://github.com/bashtanov/trunkfingerprint.git",
+        "web":  "https://github.com/bashtanov/trunkfingerprint",
+        "type": "git"
+      }
+   }
+}

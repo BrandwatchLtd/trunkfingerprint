@@ -1,0 +1,5 @@
+# chkpass extension
+comment = 'This thing calculates a fingerprint of DB structure'
+default_version = '1.0.0'
+relocatable = true
+superuser = false
