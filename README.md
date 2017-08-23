@@ -3,7 +3,7 @@ This thing calculates a fingerprint of DB structure.
 
 The main function to call is a set-returning
 ```
-get_db_structure_hash(
+trunkfingerprint.get_db_structure_hash(
        p_level int default 0,
        p_catalog regclass default null,
        p_exclude_schemas name[] default '{}'
