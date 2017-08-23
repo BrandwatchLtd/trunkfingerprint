@@ -2,7 +2,6 @@
 -- TODO: opensource it and ship as an extension
 
 create schema if not exists @extschema@;
-set schema '@extschema@';
 
 --=================================================================================================
 
