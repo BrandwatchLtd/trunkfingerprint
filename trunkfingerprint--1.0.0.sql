@@ -1,5 +1,4 @@
 -- this thing calculates a fingerprint of DB structure
--- TODO: opensource it and ship as an extension
 
 create schema if not exists @extschema@;
 
