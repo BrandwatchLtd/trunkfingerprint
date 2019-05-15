@@ -1,6 +1,6 @@
 -- this thing calculates a fingerprint of DB structure
 
-create schema if not exists @extschema@;
+create schema @extschema@;
 
 --=================================================================================================
 
