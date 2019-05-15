@@ -24,3 +24,11 @@ Description: database structure fingerprint
  .
  This package contains the server extension for PostgreSQL 9.6.
 
+Package: postgresql-trunkfingerprint-10
+Architecture: any
+Depends: postgresql-10, ${shlibs:Depends}, ${misc:Depends}
+Description: database structure fingerprint
+ This PostgreSQL extension calculates database structure fingerprint.
+ .
+ This package contains the server extension for PostgreSQL 10.
+
