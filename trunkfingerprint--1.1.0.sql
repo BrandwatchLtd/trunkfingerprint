@@ -117,7 +117,7 @@ begin
                                  when
                                           (relname in ('pg_depend', 'pg_shdepend') and attname = any('{refobjid,objid}'))
                                           or
-                                          (relname in ('pg_description', 'pg_shdescription') and attname = 'objoid')
+                                          (relname in ('pg_init_privs', 'pg_description', 'pg_shdescription') and attname = 'objoid')
                                                                 then format($$
                                    case %1$s::regclass::text
                                    when 'pg_am' then (
@@ -286,8 +286,7 @@ begin
                                           where pg_user_mapping.oid = %2$s
                                          )
                                    when '-' then '-'::text
-                                   else 1/(1 - %2$s::int/%2$s::int)
-                                          || '%% pg_depend tracking for this kind of objects not implemented %%'
+                                   else _error('pg_depend tracking for the type not implemented: ' || %1$s::regclass::text)
                                    end
                                                                     $$,
                                                                     case attname
@@ -305,7 +304,7 @@ begin
                                                                          else '0::oid' -- no subids in pg_shdepend or pg_shdescription
                                                                     end
                                                                 )
-                                 else '% ' || relname || '.' || attname || ' % attempt to return bare oid'
+                                 else _error('attempt to return bare oid: ' || relname || '.' || attname)
                             end
                      -- show object names arrays instead of oidvectors
                      when atttypid = any('{oidvector,oid[]}'::regtype[]) then
@@ -324,13 +323,14 @@ begin
                                                                       join pg_roles on pg_roles.oid = roloid)'
                                  when attname like '%types'     then attname || '::regtype[]::text'
                                  when attname = 'extconfig'     then attname || '::regclass[]::text'
-                                 else '% attempt to return bare oidvector % ' || attname
+                                 else _error('attempt to return bare oidvector: ' || relname || '.' || attname)
                             end
                      -- show something pretty-formatted instead of pg_node_trees
                      when atttypid = 'pg_node_tree'::regtype then
                             case relname || '.' || attname
                                  when 'pg_attrdef.adbin'       then 'pg_get_expr(adbin, adrelid, true)'
                                  when 'pg_constraint.conbin'   then 'pg_get_constraintdef(oid, true)'
+                                 when 'pg_class.relpartbound'  then 'pg_catalog.pg_get_expr(relpartbound, oid)'
                                  when 'pg_index.indexprs'      then 'pg_get_expr(indexprs, indrelid, true)'
                                  when 'pg_index.indpred'       then 'pg_get_expr(indpred, indrelid, true)'
                                  when 'pg_proc.proargdefaults' then 'pg_catalog.pg_get_function_arguments(oid)'
@@ -338,7 +338,7 @@ begin
                                  when 'pg_rewrite.ev_qual'     then 'null::int' -- already tracked one line above
                                  when 'pg_trigger.tgqual'      then 'pg_get_triggerdef(oid, true)'
                                  when 'pg_type.typdefaultbin'  then 'null::int' -- already tracked in pg_type.typedefault
-                                 else '% attempt to return bare pg_node_tree % ' || attname
+                                 else _error('attempt to return bare pg_node_tree: ' || relname || '.' || attname)
                             end
                      -- get certain arrays sorted
                      when atttypid = 'aclitem[]'::regtype
@@ -449,119 +449,147 @@ create or replace function _get_excluded_objects(p_exclude_schemas name[]) retur
        classid oid,
        objid oid
 ) as $f$
-       with
-       excluded_namespace as (
+begin
+       return query execute
+       $sql$
+              with
+              excluded_namespace as (
+                     select tableoid classid, oid objid
+                     from pg_namespace
+                     where nspname = any($1)
+                        or nspname like 'pg\_temp\_%'
+                        or nspname like 'pg\_toast\_temp\_%'
+              ),
+              excluded_proc as (
+                     select tableoid classid, oid objid
+                     from pg_proc
+                     where pronamespace in (select objid from excluded_namespace)
+              ),
+              excluded_opfamily as (
+                     select tableoid classid, oid objid
+                     from pg_opfamily
+                     where opfnamespace in (select objid from excluded_namespace)
+              ),
+              excluded_class as (
+                     select tableoid classid, oid objid
+                     from pg_class
+                     where relnamespace in (select objid from excluded_namespace)
+              ),
+              excluded_ts_config as (
+                     select tableoid classid, oid objid
+                     from pg_ts_config
+                     where cfgnamespace in (select objid from excluded_namespace)
+              ),
+              excluded_type as (
+                     select tableoid classid, oid objid
+                     from pg_type
+                     where typnamespace in (select objid from excluded_namespace)
+              )
+              table excluded_namespace
+           union all
+              table excluded_proc
+           union all
+              table excluded_opfamily
+           union all
+              table excluded_class
+           union all
+              table excluded_ts_config
+           union all
+              table excluded_type
+           union all
               select tableoid classid, oid objid
-              from pg_namespace
-              where nspname = any(p_exclude_schemas)
-                 or nspname like 'pg\_temp\_%'
-                 or nspname like 'pg\_toast\_temp\_%'
-       ),
-       excluded_proc as (
+              from pg_conversion
+              where connamespace in (select objid from excluded_namespace)
+           union all
               select tableoid classid, oid objid
-              from pg_proc
-              where pronamespace in (select objid from excluded_namespace)
-       ),
-       excluded_opfamily as (
+              from pg_opclass
+              where opcnamespace in (select objid from excluded_namespace)
+           union all
               select tableoid classid, oid objid
-              from pg_opfamily
-              where opfnamespace in (select objid from excluded_namespace)
-       ),
-       excluded_class as (
+              from pg_operator
+              where oprnamespace in (select objid from excluded_namespace)
+           union all
               select tableoid classid, oid objid
-              from pg_class
-              where relnamespace in (select objid from excluded_namespace)
-       ),
-       excluded_ts_config as (
+              from pg_collation
+              where collnamespace in (select objid from excluded_namespace)
+           union all
               select tableoid classid, oid objid
-              from pg_ts_config
-              where cfgnamespace in (select objid from excluded_namespace)
-       ),
-       excluded_type as (
+              from pg_default_acl
+              where defaclnamespace in (select objid from excluded_namespace)
+           union all
               select tableoid classid, oid objid
-              from pg_type
-              where typnamespace in (select objid from excluded_namespace)
-       )
-       table excluded_namespace
-    union all
-       table excluded_proc
-    union all
-       table excluded_opfamily
-    union all
-       table excluded_class
-    union all
-       table excluded_ts_config
-    union all
-       table excluded_type
-    union all
-       select tableoid classid, oid objid
-       from pg_conversion
-       where connamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_opclass
-       where opcnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_operator
-       where oprnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_collation
-       where collnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_default_acl
-       where defaclnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_extension
-       where extnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_ts_dict
-       where dictnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_ts_parser
-       where prsnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_ts_template
-       where tmplnamespace in (select objid from excluded_namespace)
-    union all
-       select tableoid classid, oid objid
-       from pg_cast
-       where castfunc in (select objid from excluded_proc)
-    union all
-       select tableoid classid, oid objid
-       from pg_amop
-       where amopfamily in (select objid from excluded_opfamily)
-    union all
-       select tableoid classid, oid objid
-       from pg_amproc
-       where amprocfamily in (select objid from excluded_opfamily)
-    union all
-       select tableoid classid, oid objid
-       from pg_rewrite
-       where ev_class in (select objid from excluded_class)
-    union all
-       select tableoid classid, oid objid
-       from pg_constraint
-       where conrelid in (select objid from excluded_class)
-    union all
-       select tableoid classid, oid objid
-       from pg_trigger
-       where tgrelid in (select objid from excluded_class)
-    union all
-       select tableoid classid, oid objid
-       from pg_attrdef
-       where adrelid in (select objid from excluded_class)
-    union all
-       select tableoid classid, oid objid
-       from pg_enum
-       where enumtypid in (select objid from excluded_type);
-$f$ language sql set search_path to pg_catalog, @extschema@, pg_temp;
+              from pg_extension
+              where extnamespace in (select objid from excluded_namespace)
+           union all
+              select tableoid classid, oid objid
+              from pg_ts_dict
+              where dictnamespace in (select objid from excluded_namespace)
+           union all
+              select tableoid classid, oid objid
+              from pg_ts_parser
+              where prsnamespace in (select objid from excluded_namespace)
+           union all
+              select tableoid classid, oid objid
+              from pg_ts_template
+              where tmplnamespace in (select objid from excluded_namespace)
+           union all
+              select tableoid classid, oid objid
+              from pg_cast
+              where castfunc in (select objid from excluded_proc)
+           union all
+              select tableoid classid, oid objid
+              from pg_amop
+              where amopfamily in (select objid from excluded_opfamily)
+           union all
+              select tableoid classid, oid objid
+              from pg_amproc
+              where amprocfamily in (select objid from excluded_opfamily)
+           union all
+              select tableoid classid, oid objid
+              from pg_rewrite
+              where ev_class in (select objid from excluded_class)
+           union all
+              select tableoid classid, oid objid
+              from pg_constraint
+              where conrelid in (select objid from excluded_class)
+           union all
+              select tableoid classid, oid objid
+              from pg_trigger
+              where tgrelid in (select objid from excluded_class)
+           union all
+              select tableoid classid, oid objid
+              from pg_attrdef
+              where adrelid in (select objid from excluded_class)
+           union all
+              select tableoid classid, oid objid
+              from pg_enum
+              where enumtypid in (select objid from excluded_type)
+       $sql$
+       ||
+       _if_version_at_least(95000, $sql$
+           union all
+              select tableoid classid, oid objid
+              from pg_transform
+              where trftype in (select objid from excluded_type)
+           union all
+              select tableoid classid, oid objid
+              from pg_policy
+              where polrelid in (select objid from excluded_class)
+       $sql$)
+       ||
+       _if_version_at_least(100000, $sql$
+           union all
+              select tableoid classid, oid objid
+              from pg_statistic_ext
+              where stxnamespace in (select objid from excluded_namespace)
+           union all
+              select tableoid classid, oid objid
+              from pg_publication_rel
+              where prrelid in (select objid from excluded_class);
+       $sql$)
+       using p_exclude_schemas;
+end;
+$f$ language plpgsql set search_path to pg_catalog, @extschema@, pg_temp;
 comment on function _get_excluded_objects(name[])
        is 'Given a list of schemas to exclude, this function retuns all the objects kind of in these schemas';
 
@@ -600,6 +628,8 @@ declare
               )$$;
        l_is_catalog bool;
        l_is_shared bool;
+       -- optionally schema-qualified name, according to search path
+       l_table_oqname text := p_table_oid::regclass::text;
 begin
        select nspname = 'pg_catalog',
               relisshared
@@ -632,55 +662,66 @@ begin
                      -- condition for not being in restricted schema
                      case
                             -- all-objects catalogs
-                            when p_table_oid = any('{pg_depend,pg_shdepend}'::regclass[])
+                            when l_table_oqname in ('pg_depend', 'pg_shdepend')
                                 then $$ (classid, objid) $$ || c_not_in_all_excluded_objects_sql
-                            when p_table_oid = any('{pg_description,pg_shdescription,pg_seclabel,pg_shseclabel}'::regclass[])
+                            when l_table_oqname in ('pg_init_privs',
+                                                                'pg_description', 'pg_shdescription',
+                                                                'pg_seclabel', 'pg_shseclabel')
                                 then $$ (classoid, objoid) $$ || c_not_in_all_excluded_objects_sql
                             -- catalogs without oid column (how on the earth they exist!)
-                            when p_table_oid = 'pg_aggregate'::regclass
+                            when l_table_oqname = 'pg_aggregate'
                                 then _get_not_restricted_condition_for_catalog('aggfnoid', 'pg_proc')
-                            when p_table_oid = 'pg_attribute'::regclass
+                            when l_table_oqname = 'pg_attribute'
                                 then _get_not_restricted_condition_for_catalog('attrelid', 'pg_class')
-                            when p_table_oid = 'pg_auth_members'::regclass
+                            when l_table_oqname = 'pg_auth_members'
                                 then _get_not_restricted_condition_for_catalog('member', 'pg_authid')
                                      || ' and ' ||
                                      _get_not_restricted_condition_for_catalog('grantor', 'pg_authid')
-                            when p_table_oid = 'pg_db_role_setting'::regclass
+                            when l_table_oqname = 'pg_db_role_setting'
                                 then _get_not_restricted_condition_for_catalog('setdatabase', 'pg_database')
                                      || ' and ' ||
                                      _get_not_restricted_condition_for_catalog('setrole', 'pg_authid')
-                            when p_table_oid = 'pg_index'::regclass
+                            when l_table_oqname = 'pg_index'
                                 then _get_not_restricted_condition_for_catalog('indexrelid', 'pg_class')
-                            when p_table_oid = 'pg_foreign_table'::regclass
+                            when l_table_oqname = 'pg_init_privs'
+                                then _get_not_restricted_condition_for_catalog('indexrelid', 'pg_class')
+                            when l_table_oqname = 'pg_foreign_table'
                                 then _get_not_restricted_condition_for_catalog('ftrelid', 'pg_class')
-                            when p_table_oid = 'pg_inherits'::regclass
+                            when l_table_oqname = 'pg_inherits'
                                 then _get_not_restricted_condition_for_catalog('inhrelid', 'pg_class')
-                            when p_table_oid = 'pg_pltemplate'::regclass
-                                then 'true' -- this guy has no numeric ID at all
-                            when p_table_oid = 'pg_range'::regclass
+                            when l_table_oqname = 'pg_partitioned_table'
+                                then _get_not_restricted_condition_for_catalog('partrelid', 'pg_class')
+                            when l_table_oqname = 'pg_sequence'
+                                then _get_not_restricted_condition_for_catalog('seqrelid', 'pg_class')
+                            when l_table_oqname = 'pg_subscription_rel'
+                                then _get_not_restricted_condition_for_catalog('srrelid', 'pg_class')
+                            when l_table_oqname = 'pg_range'
                                 then _get_not_restricted_condition_for_catalog('rngtypid', 'pg_type')
-                            when p_table_oid = 'pg_ts_config_map'::regclass
+                            when l_table_oqname = 'pg_ts_config_map'
                                 then _get_not_restricted_condition_for_catalog('mapcfg', 'pg_ts_config')
+                            -- these guys has no numeric IDs at all
+                            when l_table_oqname in ('pg_replication_origin', 'pg_pltemplate')
+                                then 'true'
                             -- ordinary catalogs
                             when l_is_catalog
                                 then _get_not_restricted_condition_for_catalog('oid', p_table_oid)
                      end,
                      -- check only current DB in global catalogs with db-related objects
                      case when l_is_catalog then
-                           case p_table_oid
-                               when 'pg_database'::regclass then 'oid'
-                               when 'pg_db_role_setting'::regclass then 'setdatabase'
-                               when 'pg_shdepend'::regclass then 'dbid'
+                           case l_table_oqname
+                               when 'pg_database' then 'oid'
+                               when 'pg_db_role_setting' then 'setdatabase'
+                               when 'pg_shdepend' then 'dbid'
                            end || ' in (0, (select oid from pg_database where datname = current_database()))'
                      end,
                      -- other catalog-specific conditions
-                     case p_table_oid
-                           when 'pg_namespace'::regclass -- exclude temp schemas
+                     case l_table_oqname
+                           when 'pg_namespace' -- exclude temp schemas
                                then $$ nspname not like 'pg@_temp@_%' escape '@'
                                    and nspname not like 'pg@_toast@_temp@_%' escape '@' $$
-                           when 'pg_trigger'::regclass -- exclude internal trigger, as their names are autogenerated
+                           when 'pg_trigger' -- exclude internal trigger, as their names are autogenerated
                                then $$ not tgisinternal $$
-                           when 'pg_attribute'::regclass -- exclude dropped columns and columns of toasted tables and indexes
+                           when 'pg_attribute' -- exclude dropped columns and columns of toasted tables and indexes
                                then $$ not attisdropped
                                        and attrelid not in (
                                               select pg_class.oid
@@ -689,25 +730,25 @@ begin
                                               where nspname = 'pg_toast'
                                                  or relkind = 'i'
                                              ) $$
-                           when 'pg_attrdef'::regclass -- exclude dropped columns defaults
+                           when 'pg_attrdef' -- exclude dropped columns defaults
                                then $$ (adrelid, adnum) not in (select attrelid, attnum from pg_attribute where attisdropped) $$
-                           when 'pg_class'::regclass -- exclude toast tables
+                           when 'pg_class' -- exclude toast tables
                                then $$ not relisshared and oid $$ || c_notoast
-                           when 'pg_index'::regclass -- exclude toast tables indices
+                           when 'pg_index' -- exclude toast tables indices
                                then $$ indrelid $$ || c_notoast
-                           when 'pg_type'::regclass -- exclude toast table types
+                           when 'pg_type' -- exclude toast table types
                                then $$ typrelid $$ || c_notoast
-                           when 'pg_depend'::regclass -- exclude rule-depends-on-column links
+                           when 'pg_depend' -- exclude rule-depends-on-column links
                                then $$ not (
-                                   classid = 'pg_rewrite'::regclass and
-                                   refclassid = 'pg_class'::regclass and
-                                   refobjsubid <> 0
+                                           classid = 'pg_rewrite'::regclass and
+                                           refclassid = 'pg_class'::regclass and
+                                           refobjsubid <> 0
                                        ) and (
-                                   classid <> 'pg_class'::regclass or objid $$ || c_notoast || $$
+                                           classid <> 'pg_class'::regclass or objid $$ || c_notoast || $$
                                        ) and (
-                                   refclassid <> 'pg_class'::regclass or refobjid $$ || c_notoast || $$
+                                           refclassid <> 'pg_class'::regclass or refobjid $$ || c_notoast || $$
                                        ) and (
-                                   deptype not in ('i', 'p')
+                                           deptype not in ('i', 'p')
                                        )$$
                      end
               ]) item
@@ -723,6 +764,33 @@ $f$ language plpgsql set search_path to pg_catalog, @extschema@, pg_temp;
 
 comment on function _get_single_table_sql(int, oid, text)
        is 'Build an SQL for a single table';
+
+--=================================================================================================
+
+create or replace function __error(p_message text) returns text as $f$
+begin
+       raise '%', p_message;
+end;
+$f$ language plpgsql;
+comment on function __error(text) is 'Report error when called';
+
+--=================================================================================================
+
+create or replace function _error(p_message text) returns text as $f$
+       select format('__error(%L)', p_message);
+$f$ language sql set search_path to pg_catalog, @extschema@, pg_temp;
+comment on function _error(text) is 'Inject error reporting into a string building expression';
+
+--=================================================================================================
+
+create or replace function _if_version_at_least(p_version int, p_code text) returns text as $f$
+       select case
+                     when current_setting('server_version_num')::bigint >= p_version
+                     then p_code
+                     else ''
+              end;
+$f$ language sql set search_path to pg_catalog, @extschema@, pg_temp;
+comment on function _if_version_at_least(int, text) is 'Shortcut for generating portable code';
 
 --=================================================================================================
 
