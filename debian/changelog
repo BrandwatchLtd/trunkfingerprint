@@ -1,3 +1,9 @@
+trunkfingerprint (1.1.2-1) unstable; urgency=medium
+
+  * Stick to named schema: bugfixes
+
+ -- Alexey Bashtanov <alexey@brandwatch.com>  Wed, 16 May 2019 08:39:26 +0100
+
 trunkfingerprint (1.1.1-1) unstable; urgency=medium
 
   * Stick to named schema

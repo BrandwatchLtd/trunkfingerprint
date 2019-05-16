@@ -1,9 +1,5 @@
 -- this thing calculates a fingerprint of DB structure
 
-create schema @extschema@;
-
---=================================================================================================
-
 create type nsp_rel_att as (
        nsp name,
        rel name,

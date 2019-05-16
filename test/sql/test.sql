@@ -1,11 +1,10 @@
-create schema foo;
-create extension trunkfingerprint schema foo;
+create extension trunkfingerprint;
 
 create table results(run int, fingerprint text);
 
 insert into results values (
        1,
-       foo.get_db_fingerprint(
+       trunkfingerprint.get_db_fingerprint(
               0,
               null,
               null,
@@ -19,7 +18,7 @@ create table bar(baz serial);
 
 insert into results values (
        2,
-       foo.get_db_fingerprint(
+       trunkfingerprint.get_db_fingerprint(
               0,
               null,
               null,
@@ -33,7 +32,7 @@ drop table bar;
 
 insert into results values (
        3,
-       foo.get_db_fingerprint(
+       trunkfingerprint.get_db_fingerprint(
               0,
               null,
               null,

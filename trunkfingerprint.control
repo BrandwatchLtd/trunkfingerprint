@@ -1,5 +1,5 @@
 comment = 'This thing calculates a fingerprint of DB structure, and of the data if requested'
-default_version = '1.1.1'
+default_version = '1.1.2'
 relocatable = false
 superuser = false
 schema = trunkfingerprint
