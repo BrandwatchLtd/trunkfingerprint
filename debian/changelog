@@ -1,3 +1,10 @@
+trunkfingerprint (1.1.3-1) unstable; urgency=medium
+
+  * ignore relhasindex
+  * detect unstable defaults better
+
+ --  <alexey@ev9d9.btn1.brandwatch.net>  Fri, 12 Jul 2019 15:49:31 +0100
+
 trunkfingerprint (1.1.2-1) unstable; urgency=medium
 
   * Stick to named schema: bugfixes
