@@ -1,3 +1,9 @@
+trunkfingerprint (1.1.4-1) unstable; urgency=medium
+
+  * actually release the below
+
+ --  <alexey@ev9d9.btn1.brandwatch.net>  Fri, 12 Jul 2019 16:41:03 +0100
+
 trunkfingerprint (1.1.3-1) unstable; urgency=medium
 
   * ignore relhasindex

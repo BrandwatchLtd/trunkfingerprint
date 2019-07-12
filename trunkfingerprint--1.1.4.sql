@@ -50,6 +50,7 @@ begin
                             ('pg_attribute', 'attndims'),-- this is not enforced by postgres; create table like does not copy it
                             ('pg_attrdef', 'adsrc'),     -- shows old values
                             ('pg_constraint', 'consrc'), -- shows old values
+                            ('pg_class', 'relhasindex'),    -- shows old values
                             ('pg_class', 'relhaspkey'),     -- shows old values
                             ('pg_class', 'relhasrules'),    -- shows old values
                             ('pg_class', 'relhastriggers'), -- shows old values
