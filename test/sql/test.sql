@@ -14,7 +14,7 @@ insert into results values (
        )
 );
 
-create table bar(baz serial);
+create table partitioned(a int, b text) partition by list((a+1));
 
 insert into results values (
        2,
@@ -28,7 +28,9 @@ insert into results values (
        )
 );
 
-drop table bar;
+drop table partitioned;
+create table partitioned(b text, c int, a int) partition by list((a+1));
+alter table partitioned drop column c;
 
 insert into results values (
        3,

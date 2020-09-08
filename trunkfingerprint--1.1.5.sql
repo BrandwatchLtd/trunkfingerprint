@@ -305,36 +305,37 @@ begin
                             end
                      -- show object names arrays instead of oidvectors
                      when atttypid = any('{oidvector,oid[]}'::regtype[]) then
-                            case when attname like '%collation' then '(select array_agg(collname order by ord)
-                                                                      from unnest(' || attname || ') with ordinality as foo(colloid,ord)
-                                                                      join pg_collation on pg_collation.oid = colloid)'
-                                 when attname = 'indclass'      then '(select array_agg(opcname order by ord)
-                                                                      from unnest(' || attname || ') with ordinality as foo(opcoid,ord)
-                                                                      join pg_opclass on pg_opclass.oid = opcoid)'
-                                 when attname like '%op'        then '(select array_agg(oprname order by ord)
-                                                                      from unnest(' || attname || ') with ordinality as foo(oproid,ord)
-                                                                      join pg_operator on pg_operator.oid = oproid)'
+                            case when attname like '%collation'            then '(select array_agg(collname order by ord)
+                                                                                 from unnest(' || attname || ') with ordinality as foo(colloid,ord)
+                                                                                 join pg_collation on pg_collation.oid = colloid)'
+                                 when attname in ('indclass', 'partclass') then '(select array_agg(opcname order by ord)
+                                                                                 from unnest(' || attname || ') with ordinality as foo(opcoid,ord)
+                                                                                 join pg_opclass on pg_opclass.oid = opcoid)'
+                                 when attname like '%op'                   then '(select array_agg(oprname order by ord)
+                                                                                 from unnest(' || attname || ') with ordinality as foo(oproid,ord)
+                                                                                 join pg_operator on pg_operator.oid = oproid)'
                                  when attname like '%roles'
-                                   or attname = 'pg_group'      then '(select array_agg(rolname order by ord)
-                                                                      from unnest(' || attname || ') with ordinality as foo(roloid,ord)
-                                                                      join pg_roles on pg_roles.oid = roloid)'
-                                 when attname like '%types'     then attname || '::regtype[]::text'
-                                 when attname = 'extconfig'     then attname || '::regclass[]::text'
+                                   or attname = 'pg_group'                 then '(select array_agg(rolname order by ord)
+                                                                                 from unnest(' || attname || ') with ordinality as foo(roloid,ord)
+                                                                                 join pg_roles on pg_roles.oid = roloid)'
+                                 when attname like '%types'                then attname || '::regtype[]::text'
+                                 when attname = 'extconfig'                then attname || '::regclass[]::text'
                                  else _error('attempt to return bare oidvector: ' || relname || '.' || attname)
                             end
                      -- show something pretty-formatted instead of pg_node_trees
                      when atttypid = 'pg_node_tree'::regtype then
                             case relname || '.' || attname
-                                 when 'pg_attrdef.adbin'       then 'pg_get_expr(adbin, adrelid, true)'
-                                 when 'pg_constraint.conbin'   then 'pg_get_constraintdef(oid, true)'
-                                 when 'pg_class.relpartbound'  then 'pg_catalog.pg_get_expr(relpartbound, oid)'
-                                 when 'pg_index.indexprs'      then 'pg_get_expr(indexprs, indrelid, true)'
-                                 when 'pg_index.indpred'       then 'pg_get_expr(indpred, indrelid, true)'
-                                 when 'pg_proc.proargdefaults' then 'pg_catalog.pg_get_function_arguments(oid)'
-                                 when 'pg_rewrite.ev_action'   then 'pg_catalog.pg_get_ruledef(oid, true)' -- NB: this function call takes most of the time
-                                 when 'pg_rewrite.ev_qual'     then 'null::int' -- already tracked one line above
-                                 when 'pg_trigger.tgqual'      then 'pg_get_triggerdef(oid, true)'
-                                 when 'pg_type.typdefaultbin'  then 'null::int' -- already tracked in pg_type.typedefault
+                                 when 'pg_attrdef.adbin'               then 'pg_get_expr(adbin, adrelid, true)'
+                                 when 'pg_constraint.conbin'           then 'pg_get_constraintdef(oid, true)'
+                                 when 'pg_class.relpartbound'          then 'pg_catalog.pg_get_expr(relpartbound, oid)'
+                                 when 'pg_index.indexprs'              then 'pg_get_expr(indexprs, indrelid, true)'
+                                 when 'pg_index.indpred'               then 'pg_get_expr(indpred, indrelid, true)'
+                                 when 'pg_partitioned_table.partexprs' then 'pg_get_partkeydef(partrelid)'
+                                 when 'pg_proc.proargdefaults'         then 'pg_catalog.pg_get_function_arguments(oid)'
+                                 when 'pg_rewrite.ev_action'           then 'pg_catalog.pg_get_ruledef(oid, true)' -- NB: this function call takes most of the time
+                                 when 'pg_rewrite.ev_qual'             then 'null::int' -- already tracked one line above
+                                 when 'pg_trigger.tgqual'              then 'pg_get_triggerdef(oid, true)'
+                                 when 'pg_type.typdefaultbin'          then 'null::int' -- already tracked in pg_type.typedefault
                                  else _error('attempt to return bare pg_node_tree: ' || relname || '.' || attname)
                             end
                      -- get certain arrays sorted
@@ -346,17 +347,15 @@ begin
                      when (relname, attname) = ('pg_attrdef', 'adnum')
                      then '(select attname from pg_attribute where attnum = adnum and attrelid = adrelid)'
                      when (relname, attname) = ('pg_index', 'indkey')
-                     then '(select array_agg(attname order by ord) from unnest(indkey::int2[]) with ordinality as foo(attn,ord)
-                            join pg_attribute on attnum = attn and attrelid = indrelid)'
+                     then _get_attribute_names_code('indrelid', 'indkey')
+                     when (relname, attname) = ('pg_partitioned_table', 'partattrs')
+                     then _get_attribute_names_code('partrelid', 'partattrs')
                      when (relname, attname) = ('pg_trigger', 'tgattr')
-                     then '(select array_agg(attname order by ord) from unnest(tgattr::int2[]) with ordinality as foo(attn,ord)
-                            join pg_attribute on attnum = attn and attrelid = tgrelid)'
+                     then _get_attribute_names_code('tgrelid', 'tgattr')
                      when (relname, attname) = ('pg_constraint', 'conkey')
-                     then '(select array_agg(attname order by ord) from unnest(conkey) with ordinality as foo(attn,ord)
-                            join pg_attribute on attnum = attn and attrelid = conrelid)'
+                     then _get_attribute_names_code('conrelid', 'conkey')
                      when (relname, attname) = ('pg_constraint', 'confkey')
-                     then '(select array_agg(attname order by ord) from unnest(confkey) with ordinality as foo(attn,ord)
-                            join pg_attribute on attnum = attn and attrelid = confrelid)'
+                     then _get_attribute_names_code('confrelid', 'confkey')
                      -- show all the rest as is
                      else attname::text end,
                      ', '
@@ -793,6 +792,26 @@ comment on function _if_version_at_least(int, text) is 'Shortcut for generating 
 
 --=================================================================================================
 
+create or replace function _get_attribute_names_code(p_relid_expr text, p_attr_positions_expr text) returns text as $f$
+       select format(
+                     $$
+                            array(
+                                   select attname
+                                   from unnest(%s::int2[]) with ordinality as _(att_num_from_vector, ord)
+                                   join pg_attribute on attrelid = %s
+                                                    and attnum = att_num_from_vector
+                                   order by ord
+                            )
+                     $$,
+                     p_attr_positions_expr,
+                     p_relid_expr
+              );
+$f$ language sql set search_path to pg_catalog, @extschema@, pg_temp;
+comment on function _get_attribute_names_code(text, text)
+       is 'Generates code to convert attribute index list into a list of their names preserving the order';
+
+--=================================================================================================
+
 create or replace function get_db_fingerprint(
        p_level int default 0,
        p_table regclass default null,
@@ -824,7 +843,7 @@ begin
               end if;
 
               if p_level = 2 then
-                     return next column_list;
+                     return next table_oid::regclass || ' ' || column_list;
               end if;
 
               single_table_sql := _get_single_table_sql(p_level, table_oid, column_list);

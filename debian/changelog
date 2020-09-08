@@ -1,3 +1,9 @@
+trunkfingerprint (1.1.5-1) unstable; urgency=medium
+
+  * support declarative partitoning
+
+ --  <alexey@ev9d9.btn1.brandwatch.net>  Fri, 04 Sep 2020 12:21:32 +0100
+
 trunkfingerprint (1.1.4-1) unstable; urgency=medium
 
   * actually release the below

@@ -18,5 +18,5 @@ trunkfingerprint.get_db_structure_hash(
 
 `p_exclude_schemas` is an array of schemas to exclude from calculation.
 
-Probably works with Postgres 9.4 only at the moment.
+Targets Postgres 10 at the moment.
 Run `sudo make install` to install it, and `create extension trunkfingerprint;` to add it to a particular database.

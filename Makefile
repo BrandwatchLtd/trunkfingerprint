@@ -1,5 +1,5 @@
 EXTENSION = trunkfingerprint
-DATA = trunkfingerprint--1.1.4.sql
+DATA = trunkfingerprint--1.1.5.sql
 
 TESTS        = $(wildcard test/sql/*.sql)
 REGRESS      = $(patsubst test/sql/%.sql,%,$(TESTS))
