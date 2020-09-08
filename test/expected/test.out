@@ -11,7 +11,7 @@ insert into results values (
               '{}'
        )
 );
-create table bar(baz serial);
+create table partitioned(a int, b text) partition by list((a+1));
 insert into results values (
        2,
        trunkfingerprint.get_db_fingerprint(
@@ -23,7 +23,9 @@ insert into results values (
               '{}'
        )
 );
-drop table bar;
+drop table partitioned;
+create table partitioned(b text, c int, a int) partition by list((a+1));
+alter table partitioned drop column c;
 insert into results values (
        3,
        trunkfingerprint.get_db_fingerprint(
@@ -41,7 +43,7 @@ group by fingerprint
 order by 1;
  array_agg 
 -----------
- {1,3}
- {2}
+ {1}
+ {2,3}
 (2 rows)
 
