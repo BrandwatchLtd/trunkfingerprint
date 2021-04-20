@@ -1,3 +1,11 @@
+trunkfingerprint (1.1.6-1) unstable; urgency=medium
+
+  * ignore pg_constraint.conkey order for check constraints
+  * flatten multiline expressions when printing column headers for detailed
+    diffs
+
+ --  <alexey@ev9d9.btn1.brandwatch.net>  Mon, 19 Apr 2021 16:45:05 +0100
+
 trunkfingerprint (1.1.5-1) unstable; urgency=medium
 
   * support declarative partitoning
