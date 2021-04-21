@@ -1,3 +1,9 @@
+trunkfingerprint (1.1.7-1) unstable; urgency=medium
+
+  * fix extension installation
+
+ --  <alexey@ev9d9.btn1.brandwatch.net>  Wed, 21 Apr 2021 16:27:01 +0100
+
 trunkfingerprint (1.1.6-1) unstable; urgency=medium
 
   * ignore pg_constraint.conkey order for check constraints
