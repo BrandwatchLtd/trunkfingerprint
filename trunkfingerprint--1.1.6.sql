@@ -352,8 +352,9 @@ begin
                      then _get_attribute_names_code('partrelid', 'partattrs')
                      when (relname, attname) = ('pg_trigger', 'tgattr')
                      then _get_attribute_names_code('tgrelid', 'tgattr')
+                     -- for check consrtaints ingore column order
                      when (relname, attname) = ('pg_constraint', 'conkey')
-                     then _get_attribute_names_code('conrelid', 'conkey')
+                     then _get_attribute_names_code('conrelid', 'conkey', 'contype <> ''c''')
                      when (relname, attname) = ('pg_constraint', 'confkey')
                      then _get_attribute_names_code('confrelid', 'confkey')
                      -- show all the rest as is
@@ -792,23 +793,31 @@ comment on function _if_version_at_least(int, text) is 'Shortcut for generating 
 
 --=================================================================================================
 
-create or replace function _get_attribute_names_code(p_relid_expr text, p_attr_positions_expr text) returns text as $f$
+create or replace function _get_attribute_names_code(
+       p_relid_expr text,
+       p_attr_positions_expr text,
+       p_preserve_order_condition text default 'true'
+) returns text as $f$
        select format(
                      $$
                             array(
                                    select attname
-                                   from unnest(%s::int2[]) with ordinality as _(att_num_from_vector, ord)
-                                   join pg_attribute on attrelid = %s
+                                   from unnest(%1$s::int2[]) with ordinality as _(att_num_from_vector, ord)
+                                   join pg_attribute on attrelid = %2$s
                                                     and attnum = att_num_from_vector
-                                   order by ord
+                                   order by case when %3$s then ord end,
+                                            case when not %3$s then attname end
                             )
                      $$,
                      p_attr_positions_expr,
-                     p_relid_expr
+                     p_relid_expr,
+                     p_preserve_order_condition
               );
 $f$ language sql set search_path to pg_catalog, @extschema@, pg_temp;
 comment on function _get_attribute_names_code(text, text)
-       is 'Generates code to convert attribute index list into a list of their names preserving the order';
+       is 'Generates code to convert attribute index list into a list of their names,
+preserving the order if p_preserve_order_condition evaluates to true
+and using alphabetical order otherwise';
 
 --=================================================================================================
 
@@ -843,7 +852,8 @@ begin
               end if;
 
               if p_level = 2 then
-                     return next table_oid::regclass || ' ' || column_list;
+                     /* title line to show what the columns are about */
+                     return next table_oid::regclass || ' ' || replace(column_list, chr(10), ' ');
               end if;
 
               single_table_sql := _get_single_table_sql(p_level, table_oid, column_list);
