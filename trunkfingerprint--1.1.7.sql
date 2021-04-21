@@ -814,7 +814,7 @@ create or replace function _get_attribute_names_code(
                      p_preserve_order_condition
               );
 $f$ language sql set search_path to pg_catalog, @extschema@, pg_temp;
-comment on function _get_attribute_names_code(text, text)
+comment on function _get_attribute_names_code(text, text, text)
        is 'Generates code to convert attribute index list into a list of their names,
 preserving the order if p_preserve_order_condition evaluates to true
 and using alphabetical order otherwise';

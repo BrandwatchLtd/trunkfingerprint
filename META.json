@@ -2,7 +2,7 @@
    "name": "TrunkFingerprint",
    "abstract": "This thing calculates a fingerprint of DB structure",
    "description": "This thing calculates a fingerprint of DB structure",
-   "version": "1.1.6",
+   "version": "1.1.7",
    "maintainer": "Alexey Bashtanov <bashtanov@imap.cc>",
    "license": {
       "PostgreSQL": "http://www.postgresql.org/about/licence"
@@ -19,9 +19,9 @@
    },
    "provides": {
      "trunkfingerprint": {
-       "file": "trunkfingerprint--1.1.6.sql",
+       "file": "trunkfingerprint--1.1.7.sql",
        "docfile": "README.md",
-       "version": "1.1.6"
+       "version": "1.1.7"
      }
    },
    "release_status": "stable",
