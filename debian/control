@@ -15,3 +15,11 @@ Description: database structure fingerprint
  This PostgreSQL extension calculates database structure fingerprint.
  .
  This package contains the server extension for PostgreSQL 10.
+
+Package: postgresql-trunkfingerprint-13
+Architecture: any
+Depends: postgresql-13, ${shlibs:Depends}, ${misc:Depends}
+Description: database structure fingerprint
+ This PostgreSQL extension calculates database structure fingerprint.
+ .
+ This package contains the server extension for PostgreSQL 13.

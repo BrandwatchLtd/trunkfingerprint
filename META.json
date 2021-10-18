@@ -11,9 +11,9 @@
       "runtime": {
          "requires": {
             "PostgreSQL": ">= 10.0"
-         }
+         },
          "recommends": {
-            "PostgreSQL": "< 11"
+            "PostgreSQL": "< 14"
          }
       }
    },

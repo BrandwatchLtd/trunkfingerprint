@@ -1,0 +1,6 @@
+150b9c16db2bf2c145ecea4713c39031  usr/share/doc/postgresql-trunkfingerprint-13/LICENSE
+ebf2553f07624f620f96b604caabb315  usr/share/doc/postgresql-trunkfingerprint-13/README.md
+125603ad4476b6e83aea46de4aefdc50  usr/share/doc/postgresql-trunkfingerprint-13/changelog.Debian.gz
+f0844453163d919d0377f2d5e19bfe29  usr/share/doc/postgresql-trunkfingerprint-13/copyright
+64b9f0f9e688d4b06cbb8a0be860ea3d  usr/share/postgresql/13/extension/trunkfingerprint--1.1.7.sql
+c988c1caa00ff236de12da321160e6f1  usr/share/postgresql/13/extension/trunkfingerprint.control

@@ -1,0 +1,14 @@
+Package: postgresql-trunkfingerprint-13
+Source: trunkfingerprint
+Version: 1.1.7-1
+Architecture: amd64
+Maintainer: Ilya Peretyagin <ilya@brandwatch.com>
+Installed-Size: 68
+Depends: postgresql-13
+Section: database
+Priority: optional
+Homepage: https://github.com/BrandwatchLtd/trunkfingerprint
+Description: database structure fingerprint
+ This PostgreSQL extension calculates database structure fingerprint.
+ .
+ This package contains the server extension for PostgreSQL 13.
