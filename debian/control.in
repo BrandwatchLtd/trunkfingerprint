@@ -9,7 +9,7 @@ Vcs-Git: git@github.com:BrandwatchLtd/trunkfingerprint.git
 Vcs-Browser: https://github.com/BrandwatchLtd/trunkfingerprint
 
 Package: postgresql-trunkfingerprint-PGVERSION
-Architecture: any
+Architecture: all
 Depends: postgresql-PGVERSION, ${shlibs:Depends}, ${misc:Depends}
 Description: database structure fingerprint
  This PostgreSQL extension calculates database structure fingerprint.
