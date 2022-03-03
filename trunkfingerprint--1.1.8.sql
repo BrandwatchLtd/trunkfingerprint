@@ -47,14 +47,15 @@ begin
                             ('pg_class', 'relpages'),
                             ('pg_class', 'relallvisible'),
                             ('pg_attribute', 'attnum'),  -- we don't check attributes order
-                            ('pg_attribute', 'attndims'),-- this is not enforced by postgres; create table like does not copy it
+                            ('pg_attribute', 'attndims'),-- this is not enforced by postgres; CREATE TABLE LIKE does not copy it
                             ('pg_attrdef', 'adsrc'),     -- shows old values
                             ('pg_constraint', 'consrc'), -- shows old values
                             ('pg_class', 'relhasindex'),    -- shows old values
                             ('pg_class', 'relhaspkey'),     -- shows old values
                             ('pg_class', 'relhasrules'),    -- shows old values
                             ('pg_class', 'relhastriggers'), -- shows old values
-                            ('pg_class', 'relhassubclass')  -- shows old values
+                            ('pg_class', 'relhassubclass'),  -- shows old values
+                            ('pg_index', 'indcheckxmin')  -- is implementation-dependent, may be different depending on whether the index was created with CONCURRENTLY keyword
                      )
                      then 'null::int'
                      -- show object names instead of oids
@@ -394,7 +395,7 @@ begin
                 relname
        order by relname;
 
-       -- then data tables
+       -- then data tables and sequences
        return query
        select pg_attribute.attrelid,
               string_agg(
@@ -430,7 +431,7 @@ begin
                            and adnum = attnum
        where attnum > 0
          and not attisdropped
-         and relkind = 'r'
+         and relkind in ('r', 'S')
          and (p_table = pg_class.oid) is not false
          and (nspname, relname) <> all(p_exclude_tables)
          and nspname not like 'pg\_%'
