@@ -1,3 +1,10 @@
+trunkfingerprint (1.1.8-1) unstable; urgency=medium
+
+  * ignore pg_index.indcheckxmin
+  * track sequence last value and internal flags
+
+ --  <alexey@ev9d9.btn1.brandwatch.net>  Wed, 03 Mar 2022 14:32:01 +0000
+
 trunkfingerprint (1.1.7-1) unstable; urgency=medium
 
   * fix extension installation
