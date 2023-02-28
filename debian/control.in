@@ -1,7 +1,7 @@
 Source: trunkfingerprint
 Section: database
 Priority: optional
-Maintainer: Ilya Peretyagin <ilya@brandwatch.com>
+Maintainer: Robert Cardell <robert.cardell@brandwatch.com>
 Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 180)
 Standards-Version: 3.9.8
 Homepage: https://github.com/BrandwatchLtd/trunkfingerprint
