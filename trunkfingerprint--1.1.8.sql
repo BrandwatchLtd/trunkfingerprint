@@ -406,9 +406,9 @@ begin
                      -- ignore explicitly excluded columns
                      when (nspname, relname, attname) = any(p_exclude_columns)
                        -- ignore columns with unstable defaults
-                       or adsrc ilike 'nextval(%)' or adsrc ilike '%now()%'
-                       or upper(adsrc) = 'CURRENT_TIMESTAMP'
-                       or adsrc ilike '%gen\_random\_bytes(%)%'
+                       or pg_get_expr(adbin, adrelid) ilike 'nextval(%)' or pg_get_expr(adbin, adrelid) ilike '%now()%'
+                       or upper(pg_get_expr(adbin, adrelid)) = 'CURRENT_TIMESTAMP'
+                       or pg_get_expr(adbin, adrelid) ilike '%gen\_random\_bytes(%)%'
                        -- ignore referring to those as well (TODO: recursive?)
                        or (attrelid, attnum) in (
                             select conrelid,
@@ -418,7 +418,7 @@ begin
                             join pg_attrdef refattrdef on adrelid = confrelid
                                                       and adnum = refattnum
                             where contype = 'f'
-                              and (adsrc like 'nextval(%)' or adsrc like '%now()%')
+                              and (pg_get_expr(adbin, adrelid) like 'nextval(%)' or pg_get_expr(adbin, adrelid) like '%now()%')
                           )
                      then 'null::int'
                      else attname
