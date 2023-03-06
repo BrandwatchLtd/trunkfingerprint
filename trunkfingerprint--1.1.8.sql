@@ -56,7 +56,7 @@ begin
                             ('pg_class', 'relhastriggers'), -- shows old values
                             ('pg_class', 'relhassubclass'),  -- shows old values
 			    ('pg_class', 'relrewrite'), -- internal detail, inaccessible in PG11 onwards
-			    ('pg_constraint', 'conparentid),
+			    ('pg_constraint', 'conparentid'),
 			    ('pg_partitioned_table', 'partdefid'),
                             ('pg_index', 'indcheckxmin')  -- is implementation-dependent, may be different depending on whether the index was created with CONCURRENTLY keyword
                      )
