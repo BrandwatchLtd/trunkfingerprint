@@ -386,7 +386,7 @@ begin
        join pg_namespace on pg_namespace.oid = relnamespace
        where nspname = 'pg_catalog'
          and relkind = 'r'
-         and relname <> all('{pg_statistic,pg_largeobject,pg_largeobject_metadata}'::name[] || -- those are rather data than structure
+         and relname <> all('{pg_statistic,pg_statistic_ext_data,pg_largeobject,pg_largeobject_metadata}'::name[] || -- those are rather data than structure
                             '{pg_tablespace}'::name[] || -- totally physical, does not relate to logical DB structure
                             '{pg_seclabel,pg_shseclabel}'::name[] -- TBD
                             )
