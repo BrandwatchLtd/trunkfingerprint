@@ -1,5 +1,5 @@
 # trunkfingerprint
-This thing calculates a fingerprint of DB structure.
+This extension calculates a fingerprint of the DB structure.
 
 The main function to call is a set-returning
 ```
@@ -18,5 +18,6 @@ trunkfingerprint.get_db_structure_hash(
 
 `p_exclude_schemas` is an array of schemas to exclude from calculation.
 
-Targets Postgres 10 at the moment, for v.13 it is broken.
+Known to run (but not necessarily well-tested) on PostgreSQL versions 10 thru 15.
+
 Run `sudo make install` to install it, and `create extension trunkfingerprint;` to add it to a particular database.
