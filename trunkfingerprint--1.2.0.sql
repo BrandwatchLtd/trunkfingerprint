@@ -1,4 +1,4 @@
--- this thing calculates a fingerprint of DB structure
+-- Calculates a fingerprint of the database structure
 
 \echo Use "CREATE EXTENSION trunkfingerprint" to load this file. \quit
 
