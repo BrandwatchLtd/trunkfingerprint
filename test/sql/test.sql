@@ -1,5 +1,3 @@
-create extension trunkfingerprint;
-
 create table results(run int, fingerprint text);
 
 insert into results values (
