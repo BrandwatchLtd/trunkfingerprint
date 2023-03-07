@@ -1,3 +1,9 @@
+trunkfingerprint (1.2.0-1) unstable; urgency=medium
+
+  * Support for newer PostgreSQL versions up to 15
+
+ --  <robert.cardell@brandwatch.com>  Tue, 07 Mar 2023 14:00:00 +0000
+
 trunkfingerprint (1.1.8-1) unstable; urgency=medium
 
   * ignore pg_index.indcheckxmin
