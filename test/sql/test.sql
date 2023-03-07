@@ -1,4 +1,4 @@
-create table results(run int, fingerprint text);
+create temp table results(run int, fingerprint text);
 
 insert into results values (
        1,
@@ -42,6 +42,7 @@ insert into results values (
        )
 );
 
+drop table partitioned;
 select array_agg(run)
 from results
 group by fingerprint
