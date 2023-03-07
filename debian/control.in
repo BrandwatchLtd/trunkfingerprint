@@ -1,7 +1,7 @@
 Source: trunkfingerprint
 Section: database
 Priority: optional
-Maintainer: Ilya Peretyagin <ilya@brandwatch.com>
+Maintainer: Robert Cardell <robert.cardell@brandwatch.com>
 Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 180)
 Standards-Version: 3.9.8
 Homepage: https://github.com/BrandwatchLtd/trunkfingerprint
@@ -12,6 +12,6 @@ Package: postgresql-trunkfingerprint-PGVERSION
 Architecture: all
 Depends: postgresql-PGVERSION, ${shlibs:Depends}, ${misc:Depends}
 Description: database structure fingerprint
- This PostgreSQL extension calculates database structure fingerprint.
+ This PostgreSQL extension calculates a database structure fingerprint.
  .
  This package contains the server extension for PostgreSQL PGVERSION.

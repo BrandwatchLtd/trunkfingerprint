@@ -1,4 +1,6 @@
--- this thing calculates a fingerprint of DB structure
+-- Calculates a fingerprint of the database structure
+
+\echo Use "CREATE EXTENSION trunkfingerprint" to load this file. \quit
 
 create type nsp_rel_att as (
        nsp name,
@@ -55,6 +57,10 @@ begin
                             ('pg_class', 'relhasrules'),    -- shows old values
                             ('pg_class', 'relhastriggers'), -- shows old values
                             ('pg_class', 'relhassubclass'),  -- shows old values
+			    ('pg_class', 'relrewrite'), -- internal detail, inaccessible in PG11 onwards
+			    ('pg_constraint', 'conparentid'),
+			    ('pg_partitioned_table', 'partdefid'),
+			    ('pg_proc', 'prosqlbody'),
                             ('pg_index', 'indcheckxmin')  -- is implementation-dependent, may be different depending on whether the index was created with CONCURRENTLY keyword
                      )
                      then 'null::int'
@@ -383,7 +389,7 @@ begin
        join pg_namespace on pg_namespace.oid = relnamespace
        where nspname = 'pg_catalog'
          and relkind = 'r'
-         and relname <> all('{pg_statistic,pg_largeobject,pg_largeobject_metadata}'::name[] || -- those are rather data than structure
+         and relname <> all('{pg_statistic,pg_statistic_ext_data,pg_largeobject,pg_largeobject_metadata}'::name[] || -- those are rather data than structure
                             '{pg_tablespace}'::name[] || -- totally physical, does not relate to logical DB structure
                             '{pg_seclabel,pg_shseclabel}'::name[] -- TBD
                             )
@@ -403,9 +409,9 @@ begin
                      -- ignore explicitly excluded columns
                      when (nspname, relname, attname) = any(p_exclude_columns)
                        -- ignore columns with unstable defaults
-                       or adsrc ilike 'nextval(%)' or adsrc ilike '%now()%'
-                       or upper(adsrc) = 'CURRENT_TIMESTAMP'
-                       or adsrc ilike '%gen\_random\_bytes(%)%'
+                       or pg_get_expr(adbin, adrelid) ilike 'nextval(%)' or pg_get_expr(adbin, adrelid) ilike '%now()%'
+                       or upper(pg_get_expr(adbin, adrelid)) = 'CURRENT_TIMESTAMP'
+                       or pg_get_expr(adbin, adrelid) ilike '%gen\_random\_bytes(%)%'
                        -- ignore referring to those as well (TODO: recursive?)
                        or (attrelid, attnum) in (
                             select conrelid,
@@ -415,7 +421,7 @@ begin
                             join pg_attrdef refattrdef on adrelid = confrelid
                                                       and adnum = refattnum
                             where contype = 'f'
-                              and (adsrc like 'nextval(%)' or adsrc like '%now()%')
+                              and (pg_get_expr(adbin, adrelid) like 'nextval(%)' or pg_get_expr(adbin, adrelid) like '%now()%')
                           )
                      then 'null::int'
                      else attname
