@@ -1,5 +1,7 @@
 -- this thing calculates a fingerprint of DB structure
 
+\echo Use "CREATE EXTENSION trunkfingerprint" to load this file. \quit
+
 create type nsp_rel_att as (
        nsp name,
        rel name,
