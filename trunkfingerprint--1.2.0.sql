@@ -364,6 +364,8 @@ begin
                      then _get_attribute_names_code('conrelid', 'conkey', 'contype <> ''c''')
                      when (relname, attname) = ('pg_constraint', 'confkey')
                      then _get_attribute_names_code('confrelid', 'confkey')
+                     when (relname, attname) = ('pg_constraint', 'confdelsetcols')
+                     then _get_attribute_names_code('confrelid', 'confdelsetcols')
                      -- show all the rest as is
                      else attname::text end,
                      ', '
