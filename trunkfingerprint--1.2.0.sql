@@ -90,6 +90,7 @@ begin
                                  when attname like '%opc'       then '(select opcname from pg_opclass where oid = foo.' || attname || ')'
                                  when attname like '%tablespace'then '(select spcname from pg_tablespace where oid = foo.' || attname || ')'
                                  when attname like '%partdefid' then '(select relname from pg_class where oid = foo.' || attname || ')'
+                                 when attname like '%pnnspid'   then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
                                  when attname like '%relid'
                                    or attname like '%indid'
                                    or attname like '%classid'
