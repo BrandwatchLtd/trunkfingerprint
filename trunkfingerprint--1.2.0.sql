@@ -58,7 +58,6 @@ begin
                             ('pg_class', 'relhastriggers'), -- shows old values
                             ('pg_class', 'relhassubclass'),  -- shows old values
 			    ('pg_class', 'relrewrite'), -- internal detail, inaccessible in PG11 onwards
-			    ('pg_partitioned_table', 'partdefid'),
 			    ('pg_proc', 'prosqlbody'),
                             ('pg_index', 'indcheckxmin')  -- is implementation-dependent, may be different depending on whether the index was created with CONCURRENTLY keyword
                      )
@@ -90,6 +89,7 @@ begin
                                                                 then '(select oprname from pg_operator where oid = foo.' || attname || ')'
                                  when attname like '%opc'       then '(select opcname from pg_opclass where oid = foo.' || attname || ')'
                                  when attname like '%tablespace'then '(select spcname from pg_tablespace where oid = foo.' || attname || ')'
+                                 when attname like '%partdefid' then '(select relname from pg_class where oid = foo.' || attname || ')'
                                  when attname like '%relid'
                                    or attname like '%indid'
                                    or attname like '%classid'
