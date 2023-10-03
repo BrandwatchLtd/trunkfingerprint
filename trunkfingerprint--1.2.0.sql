@@ -361,6 +361,8 @@ begin
                      then _get_attribute_names_code('partrelid', 'partattrs')
                      when (relname, attname) = ('pg_trigger', 'tgattr')
                      then _get_attribute_names_code('tgrelid', 'tgattr')
+                     when (relname, attname) = ('pg_publication_rel', 'prattrs')
+                     then _get_attribute_names_code('prrelid', 'prattrs')
                      -- for check constraints ignore column order
                      when (relname, attname) = ('pg_constraint', 'conkey')
                      then _get_attribute_names_code('conrelid', 'conkey', 'contype <> ''c''')
