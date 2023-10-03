@@ -345,6 +345,7 @@ begin
                                  when 'pg_rewrite.ev_qual'             then 'null::int' -- already tracked one line above
                                  when 'pg_trigger.tgqual'              then 'pg_get_triggerdef(oid, true)'
                                  when 'pg_type.typdefaultbin'          then 'null::int' -- already tracked in pg_type.typedefault
+                                 when 'pg_publication_rel.prqual'      then 'pg_get_expr(prqual, prrelid, true)'
                                  else _error('attempt to return bare pg_node_tree: ' || relname || '.' || attname)
                             end
                      -- get certain arrays sorted
