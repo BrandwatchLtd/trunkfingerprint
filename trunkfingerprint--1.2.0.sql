@@ -92,6 +92,10 @@ begin
                                  when attname like '%partdefid' then '(select relname from pg_class where oid = foo.' || attname || ')'
                                  when attname like '%pnnspid'   then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
                                  when attname like '%pnpubid'   then '(select pubname from pg_publication where oid = foo.' || attname || ')'
+                                 when attname like '%tgparentid'
+                                                                then '(select concat(ns.nspname, ''.'' ,tg.tgname)
+                                                                       from pg_trigger tg join pg_namespace ns on tg.tgparentid = ns.oid
+                                                                       where tg.oid = foo.' || attname || ')'
                                  when attname like '%relid'
                                    or attname like '%indid'
                                    or attname like '%classid'
