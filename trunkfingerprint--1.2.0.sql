@@ -91,10 +91,8 @@ begin
                                  when attname like '%opc'       then '(select opcname from pg_opclass where oid = foo.' || attname || ')'
                                  when attname like '%tablespace'then '(select spcname from pg_tablespace where oid = foo.' || attname || ')'
                                  when attname like '%pnpubid'   then '(select pubname from pg_publication where oid = foo.' || attname || ')'
-                                 when attname like '%tgparentid'
-                                                                then '(select concat(ns.nspname, ''.'' ,tg.tgname)
-                                                                       from pg_trigger tg join pg_namespace ns on tg.tgparentid = ns.oid
-                                                                       where tg.oid = foo.' || attname || ')'
+                                 when attname like '%tgparentid' then '(select (tgrelid::regclass::text, tgname)::text
+                                                                      from pg_trigger where oid = foo.' || attname || ')'
                                  when attname like '%relid'
                                    or attname like '%indid'
                                    or attname like '%classid'
