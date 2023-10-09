@@ -64,7 +64,8 @@ begin
                      then 'null::int'
                      -- show object names instead of oids
                      when atttypid = 'oid'::regtype then
-                            case when attname like '%namespace' then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
+                            case when attname like '%namespace'
+                                   or attname like '%pnnspid'   then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
                                  when attname like '%owner'
                                    or attname like '%grantor'
                                    or attname like '%member'
@@ -89,7 +90,6 @@ begin
                                                                 then '(select oprname from pg_operator where oid = foo.' || attname || ')'
                                  when attname like '%opc'       then '(select opcname from pg_opclass where oid = foo.' || attname || ')'
                                  when attname like '%tablespace'then '(select spcname from pg_tablespace where oid = foo.' || attname || ')'
-                                 when attname like '%pnnspid'   then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
                                  when attname like '%pnpubid'   then '(select pubname from pg_publication where oid = foo.' || attname || ')'
                                  when attname like '%tgparentid'
                                                                 then '(select concat(ns.nspname, ''.'' ,tg.tgname)
