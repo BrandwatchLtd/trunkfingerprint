@@ -79,8 +79,9 @@ begin
                                  when attname like '%server'    then '(select srvname from pg_foreign_server where oid = foo.' || attname || ')'
                                  when attname like '%fdw'       then '(select fdwname from pg_foreign_data_wrapper where oid = foo.' || attname || ')'
                                  when attname like '%lang'      then '(select lanname from pg_language where oid = foo.' || attname || ')'
-                                 when attname like '%constraint'
-                                   or attname like '%conparentid' then '(select conname from pg_constraint where oid = foo.' || attname || ')'
+                                 when attname like '%constraint' then '(select conname from pg_constraint where oid = foo.' || attname || ')'
+                                 when attname like '%conparentid' then '(select (conrelid::regclass::text, conname)::text
+                                                                      from pg_constraint where oid = foo.' || attname || ')'
                                  when attname like '%am'
                                    or attname like '%method'    then '(select amname from pg_am where oid = foo.' || attname || ')'
                                  when attname like '%family'    then '(select opfname from pg_opfamily where oid = foo.' || attname || ')'
