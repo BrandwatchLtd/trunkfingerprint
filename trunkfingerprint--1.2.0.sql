@@ -89,7 +89,6 @@ begin
                                                                 then '(select oprname from pg_operator where oid = foo.' || attname || ')'
                                  when attname like '%opc'       then '(select opcname from pg_opclass where oid = foo.' || attname || ')'
                                  when attname like '%tablespace'then '(select spcname from pg_tablespace where oid = foo.' || attname || ')'
-                                 when attname like '%partdefid' then '(select relname from pg_class where oid = foo.' || attname || ')'
                                  when attname like '%pnnspid'   then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
                                  when attname like '%pnpubid'   then '(select pubname from pg_publication where oid = foo.' || attname || ')'
                                  when attname like '%tgparentid'
@@ -100,6 +99,7 @@ begin
                                    or attname like '%indid'
                                    or attname like '%classid'
                                    or attname like '%classoid'
+                                   or attname like '%partdefid'
                                    or attname like '%@_class' escape '@'
                                    or attname = any('{inhparent}')
                                    or (relname, attname) = ('pg_class', 'oid')
