@@ -58,15 +58,14 @@ begin
                             ('pg_class', 'relhastriggers'), -- shows old values
                             ('pg_class', 'relhassubclass'),  -- shows old values
 			    ('pg_class', 'relrewrite'), -- internal detail, inaccessible in PG11 onwards
-			    ('pg_constraint', 'conparentid'),
-			    ('pg_partitioned_table', 'partdefid'),
 			    ('pg_proc', 'prosqlbody'),
                             ('pg_index', 'indcheckxmin')  -- is implementation-dependent, may be different depending on whether the index was created with CONCURRENTLY keyword
                      )
                      then 'null::int'
                      -- show object names instead of oids
                      when atttypid = 'oid'::regtype then
-                            case when attname like '%namespace' then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
+                            case when attname like '%namespace'
+                                   or attname like '%pnnspid'   then '(select nspname from pg_namespace where oid = foo.' || attname || ')'
                                  when attname like '%owner'
                                    or attname like '%grantor'
                                    or attname like '%member'
@@ -80,7 +79,9 @@ begin
                                  when attname like '%server'    then '(select srvname from pg_foreign_server where oid = foo.' || attname || ')'
                                  when attname like '%fdw'       then '(select fdwname from pg_foreign_data_wrapper where oid = foo.' || attname || ')'
                                  when attname like '%lang'      then '(select lanname from pg_language where oid = foo.' || attname || ')'
-                                 when attname like '%constraint'then '(select conname from pg_constraint where oid = foo.' || attname || ')'
+                                 when attname like '%constraint' then '(select conname from pg_constraint where oid = foo.' || attname || ')'
+                                 when attname like '%conparentid' then '(select (conrelid::regclass::text, conname)::text
+                                                                      from pg_constraint where oid = foo.' || attname || ')'
                                  when attname like '%am'
                                    or attname like '%method'    then '(select amname from pg_am where oid = foo.' || attname || ')'
                                  when attname like '%family'    then '(select opfname from pg_opfamily where oid = foo.' || attname || ')'
@@ -90,10 +91,14 @@ begin
                                                                 then '(select oprname from pg_operator where oid = foo.' || attname || ')'
                                  when attname like '%opc'       then '(select opcname from pg_opclass where oid = foo.' || attname || ')'
                                  when attname like '%tablespace'then '(select spcname from pg_tablespace where oid = foo.' || attname || ')'
+                                 when attname like '%pnpubid'   then '(select pubname from pg_publication where oid = foo.' || attname || ')'
+                                 when attname like '%tgparentid' then '(select (tgrelid::regclass::text, tgname)::text
+                                                                      from pg_trigger where oid = foo.' || attname || ')'
                                  when attname like '%relid'
                                    or attname like '%indid'
                                    or attname like '%classid'
                                    or attname like '%classoid'
+                                   or attname like '%partdefid'
                                    or attname like '%@_class' escape '@'
                                    or attname = any('{inhparent}')
                                    or (relname, attname) = ('pg_class', 'oid')
@@ -343,6 +348,8 @@ begin
                                  when 'pg_rewrite.ev_qual'             then 'null::int' -- already tracked one line above
                                  when 'pg_trigger.tgqual'              then 'pg_get_triggerdef(oid, true)'
                                  when 'pg_type.typdefaultbin'          then 'null::int' -- already tracked in pg_type.typedefault
+                                 when 'pg_publication_rel.prqual'      then 'pg_get_expr(prqual, prrelid, true)'
+                                 when 'pg_statistic_ext.stxexprs'      then 'pg_get_expr(stxexprs, stxrelid, true)'
                                  else _error('attempt to return bare pg_node_tree: ' || relname || '.' || attname)
                             end
                      -- get certain arrays sorted
@@ -359,11 +366,15 @@ begin
                      then _get_attribute_names_code('partrelid', 'partattrs')
                      when (relname, attname) = ('pg_trigger', 'tgattr')
                      then _get_attribute_names_code('tgrelid', 'tgattr')
-                     -- for check consrtaints ingore column order
+                     when (relname, attname) = ('pg_publication_rel', 'prattrs')
+                     then _get_attribute_names_code('prrelid', 'prattrs')
+                     -- for check constraints ignore column order
                      when (relname, attname) = ('pg_constraint', 'conkey')
                      then _get_attribute_names_code('conrelid', 'conkey', 'contype <> ''c''')
                      when (relname, attname) = ('pg_constraint', 'confkey')
                      then _get_attribute_names_code('confrelid', 'confkey')
+                     when (relname, attname) = ('pg_constraint', 'confdelsetcols')
+                     then _get_attribute_names_code('confrelid', 'confdelsetcols')
                      -- show all the rest as is
                      else attname::text end,
                      ', '
